@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t blueseal/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true blueseal/react-test npm test
+
+after_success:
+  - docker build -t blueseal/multi-client ./client
+  - docker build -t blueseal/multi-nginx ./nginx
+  - docker build -t blueseal/multi-server ./server
+  - docker build -t blueseal/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push blueseal/multi-client
+  - docker push blueseal/multi-nginx
+  - docker push blueseal/multi-server
+  - docker push blueseal/multi-worker
